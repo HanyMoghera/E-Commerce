@@ -14,6 +14,8 @@ import staffRouter from "./modules/staff/staff.controller.js";
 import attendencRouter from "./modules/attendence/attendence.controller.js";
 import cartRouter from "./modules/cart/cart.controller.js";
 import { connectRedis } from "./database/redis.connection.js";
+import paymentRouter from "./modules/payment/payment.routes.js";
+
 import { v2 as cloudinary } from "cloudinary";
 import cors from "cors";
 import helmet from "helmet";
@@ -32,7 +34,7 @@ export async function bootstrap() {
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
-
+  app.use("/api/v1/payments", paymentRouter); // Stripe webhook route
   app.use("/api/v1/auth", authRouter);
   app.use("/api/v1/users", userRouter);
   app.use("/api/v1/categories", categoryRouter);

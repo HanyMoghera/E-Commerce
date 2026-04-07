@@ -7,12 +7,20 @@ const orderItemSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
-    quantity: Number,
-    price: Number, // snapshot
+    quantity: {
+      type: Number,
+      required: true,
+      default: 1,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
   },
   { _id: false },
 );
 
+// Main order schema
 const orderSchema = new mongoose.Schema(
   {
     user: {
@@ -21,7 +29,10 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    items: [orderItemSchema],
+    items: {
+      type: [orderItemSchema],
+      required: true,
+    },
 
     totalAmount: {
       type: Number,
@@ -30,7 +41,7 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["cod", "card"],
+      enum: ["cod", "card"], // cod = cash on delivery
       default: "cod",
     },
 
@@ -38,6 +49,10 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
+    },
+
+    stripePaymentIntentId: {
+      type: String, // stores Stripe PaymentIntent ID
     },
 
     orderStatus: {
@@ -54,4 +69,5 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Export the model
 export const Order = mongoose.model("Order", orderSchema);

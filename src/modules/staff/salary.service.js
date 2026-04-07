@@ -32,13 +32,10 @@ export const addDeduction = async (req, res) => {
 export const getDeductions = async (req, res) => {
   try {
     const { id } = req.params;
-
     // Make sure staff exists
     const staff = await Staff.findOne({ _id: id, isDeleted: false });
     if (!staff) return res.status(404).json({ message: "Staff not found" });
-
     const deductions = await Deduction.find({ staff: id }).sort({ date: -1 });
-
     res.json({ deductions });
   } catch (error) {
     res.status(500).json({ message: error.message });

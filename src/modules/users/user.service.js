@@ -1,8 +1,8 @@
 import { User } from "../../database/models/user.model.js";
 import { uploadCloudinary } from "../../utils/uploadClodinary.util.js";
+
 export const getProfile = async (req, res) => {
   try {
-    console.log("User's data:", req.user);
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });

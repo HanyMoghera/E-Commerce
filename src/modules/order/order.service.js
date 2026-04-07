@@ -1,14 +1,15 @@
 import mongoose from "mongoose";
 import { Order } from "../../database/models/order.model.js";
 import { Cart } from "../../database/models/cart.model.js";
+import { createPaymentIntent } from "../payment/payment.service.js";
 
 export const checkoutOrder = async (req, res) => {
   try {
     const userId = req.user.id;
+    const paymentMethod = req.body.paymentMethod || "cod"; // accept method from frontend
 
     // 1. Get cart
     const cart = await Cart.findOne({ user: userId }).populate("items.product");
-
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
@@ -44,29 +45,45 @@ export const checkoutOrder = async (req, res) => {
       await product.save();
     }
 
-    // 3. Create order
-    const order = await Order.create({
+    // 3. Create order (initially)
+    const orderData = {
       user: userId,
       items: orderItems,
       totalAmount,
-      paymentMethod: "cod",
-      paymentStatus: "pending",
+      paymentMethod,
+      paymentStatus: paymentMethod === "cod" ? "pending" : "pending",
       orderStatus: "pending",
       shippingAddress: req.body.shippingAddress || {},
-    });
+    };
 
-    // 4. Clear cart
+    const order = await Order.create(orderData);
+
+    let clientSecret = null;
+
+    // 4. If card payment, create Stripe PaymentIntent
+    if (paymentMethod === "card") {
+      const paymentIntent = await createPaymentIntent(order);
+
+      // save PaymentIntent ID in order
+      order.stripePaymentIntentId = paymentIntent.id;
+      await order.save();
+
+      clientSecret = paymentIntent.client_secret;
+    }
+
+    // 5. Clear cart
     cart.items = [];
     await cart.save();
 
+    // 6. Respond
     res.status(201).json({
       message: "Order created successfully",
       order,
+      clientSecret, // send to frontend if card payment
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
+    console.error(error);
+    res.status(400).json({ message: error.message });
   }
 };
 
