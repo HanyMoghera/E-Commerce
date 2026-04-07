@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+import http from "http";
 import express from "express";
 import { databaseConnection } from "./database/connection.js";
 import authRouter from "./modules/auth/auth.controller.js";
@@ -15,6 +16,7 @@ import attendencRouter from "./modules/attendence/attendence.controller.js";
 import cartRouter from "./modules/cart/cart.controller.js";
 import { connectRedis } from "./database/redis.connection.js";
 import paymentRouter from "./modules/payment/payment.routes.js";
+import { initSocket } from "./socket/index.js";
 
 import { v2 as cloudinary } from "cloudinary";
 import cors from "cors";
@@ -24,6 +26,10 @@ export async function bootstrap() {
   const app = express();
   app.use(cors());
   app.use(helmet());
+  // Create HTTP server
+  const server = http.createServer(app);
+  // Initialize Socket.io with the HTTP server
+  initSocket(server);
 
   app.use(express.json());
   databaseConnection();
